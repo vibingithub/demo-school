@@ -1,0 +1,92 @@
+server:
+  port: 7000
+
+spring:
+  application:
+    name: school
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    
+student:
+  service-url: http://school-students
+library:
+  service-url: http://school-library
+  
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      studentService:
+        register-health-indicator: true
+        event-consumer-buffer-size: 10
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 6
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+        sliding-window-type: count-based
+      
+      libraryService:
+        register-health-indicator: true
+        event-consumer-buffer-size: 10
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 6
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+        sliding-window-type: count-based
+        
+  retry:
+    instances:
+      studentService:
+        max-attempts: 5
+        wait-duration: 2000
+      
+      libraryService:
+        max-attempts: 5
+        wait-duration: 2000
+
+  ratelimiter:
+    instances:
+      studentService:
+        register-health-indicator: true
+        limit-for-period: 1
+        limit-refresh-period: 15s
+        timeout-duration: 10s
+        event-consumer-buffer-size: 10
+      
+      libraryService:
+        register-health-indicator: true
+        limit-for-period: 2
+        limit-refresh-period: 5s
+        timeout-duration: 10s
+        event-consumer-buffer-size: 10
+
+  thread-pool-bulkhead:
+    instances:
+      studentService:
+        max-thread-pool-size: 1
+        core-thread-pool-size: 1
+        queue-capacity: 1
+      
+      libraryService:
+        max-thread-pool-size: 2
+        core-thread-pool-size: 2
+        queue-capacity: 5
+        
